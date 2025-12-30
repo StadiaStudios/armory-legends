@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARMORY LEGENDS | PLAY NOW FREE</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="resources/icons/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'JetBrains+Mono', monospace;
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f0f0f; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #fbbf24; }
+
+        .crt::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 200;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .neon-border { border: 1px solid #333; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .tab-active { border-bottom: 2px solid #fbbf24; color: #fbbf24; }
+        .stat-bar { height: 6px; background: #222; border-radius: 3px; overflow: hidden; }
+        .stat-fill { height: 100%; transition: width 0.3s ease; }
+        .weapon-png { filter: drop-shadow(0 0 10px rgba(0,0,0,0.8)); transition: all 0.3s ease; object-fit: contain; }
+        .weapon-png-large { filter: drop-shadow(0 0 25px rgba(0,0,0,1)); max-width: 80%; max-height: 80%; }
+        .loading-overlay { background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(4px); }
+    </style>
+</head>
+<body class="crt">
+    <audio id="bg-music" loop><source src="sfx/bg-music.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-purchase"><source src="sfx/purchase.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-hover"><source src="sfx/hover-sfx.mp3" type="audio/mpeg"></audio>
+    <!-- New Audio for Nav Click -->
+    <audio id="sfx-click"><source src="sfx/click.mp3" type="audio/mpeg"></audio>
+
+    <div id="app" class="max-w-5xl mx-auto p-4 md:p-8">
+        <div id="nav-container"></div>
+
+        <main class="relative min-h-[600px]">
+            <div id="market-loading" class="absolute inset-0 z-50 flex flex-col items-center justify-center loading-overlay hidden">
+                <img style="width:100px; border-radius:100%; border: 3px solid rgb(31, 31, 31);" src="resources/icons/marketplace.png"><br><br>
+                <div class="text-amber-500 text-xs font-bold uppercase tracking-[0.3em]">Establishing Secure Connection...</div>
+            </div>
+
+            <!-- Workshop Section -->
+            <section id="view-workshop" class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div class="lg:col-span-4 bg-zinc-900 p-4 rounded-lg neon-border">
+                    <h2 class="text-xs uppercase text-zinc-500 mb-4 font-bold border-b border-zinc-800 pb-2">Weapon Armory</h2>
+                    <div id="inventory-list" class="space-y-2 max-h-[500px] overflow-y-auto pr-2"></div>
+                    <div class="mt-4 pt-4 border-t border-zinc-800">
+                        <button onclick="resetGame()" class="text-[10px] uppercase text-red-500/50 hover:text-red-500 transition-colors">Wipe Save Data</button>
+                    </div>
+                </div>
+
+                <div id="custom-area" class="lg:col-span-8 space-y-6 hidden">
+                    <div class="bg-zinc-900 p-6 rounded-lg neon-border relative overflow-hidden">
+                        <div id="weapon-preview" class="h-64 flex items-center justify-center bg-zinc-950 rounded border border-zinc-800 mb-6 bg-[radial-gradient(circle,_#111_0%,_#000_100%)]"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="text-sm font-bold uppercase mb-4 text-amber-500">Components</h3>
+                                <div id="weapon-stats" class="space-y-4"></div>
+                            </div>
+                            <div class="space-y-6">
+                                <div>
+                                    <h3 class="text-sm font-bold uppercase mb-2 text-zinc-300">Texture Finishes</h3>
+                                    <div class="flex flex-wrap gap-2">
+                                        <button onclick="updateColor('charcoal')" title="Charcoal ($150)" class="w-8 h-8 rounded border border-zinc-700 bg-[#2d2d2d] hover:scale-110 transition-transform"></button>
+                                        <button onclick="updateColor('navy')" title="Navy ($150)" class="w-8 h-8 rounded border border-zinc-700 bg-[#1a365d] hover:scale-110 transition-transform"></button>
+                                        <button onclick="updateColor('gold')" title="Gold ($1,000)" class="w-8 h-8 rounded border border-zinc-700 bg-[#fbbf24] hover:scale-110 transition-transform"></button>
+                                        <button onclick="updateColor('tan')" title="Tan ($150)" class="w-8 h-8 rounded border border-zinc-700 bg-[tan] hover:scale-110 transition-transform"></button>
+                                        <button onclick="updateColor('white')" title="White ($150)" class="w-8 h-8 rounded border border-zinc-700 bg-[#ffffff] hover:scale-110 transition-transform"></button>
+                                        <button onclick="updateColor('red')" title="Red ($150)" class="w-8 h-8 rounded border border-zinc-700 bg-[#dc2626] hover:scale-110 transition-transform"></button>
+                                    </div>
+                                </div>
+                                <div class="space-y-3">
+                                    <button onclick="upgrade('accuracy')" class="w-full text-left bg-zinc-800 hover:bg-zinc-700 p-2 rounded text-xs flex justify-between items-center transition-colors"><span>Rifled Barrel</span><span class="text-amber-500 font-bold">-$450</span></button>
+                                    <button onclick="upgrade('durability')" class="w-full text-left bg-zinc-800 hover:bg-zinc-700 p-2 rounded text-xs flex justify-between items-center transition-colors"><span>Titanium Pin</span><span class="text-amber-500 font-bold">-$300</span></button>
+                                    <button onclick="upgrade('handling')" class="w-full text-left bg-zinc-800 hover:bg-zinc-700 p-2 rounded text-xs flex justify-between items-center transition-colors"><span>Ergo Grip</span><span class="text-amber-500 font-bold">-$250</span></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="empty-workshop" class="lg:col-span-8 flex flex-col items-center justify-center text-zinc-600 border-2 border-dashed border-zinc-800 rounded-lg h-96">
+                    <p class="font-bold uppercase tracking-widest text-sm">Select a Weapon to View Workshop</p>
+                </div>
+            </section>
+
+            <!-- Marketplace Section -->
+            <section id="view-market" class="hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="buyer-list"></div>
+            </section>
+
+            <!-- Shop Section -->
+            <section id="view-shop" class="hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="shop-list"></div>
+            </section>
+        </main>
+
+        <div id="toast" class="fixed bottom-8 right-8 bg-zinc-100 text-black px-6 py-3 font-bold uppercase text-xs tracking-widest translate-y-20 opacity-0 transition-all duration-300 z-[100]">System Alert</div>
+    </div>
+
+    <!-- LOAD THE NEW GUN CONFIGURATION FILE FIRST -->
+    <script src="scripts/guns.js"></script>
+
+    <!-- External logic files -->
+    <script src="scripts/navbar.js"></script>
+    <script src="scripts/market.js"></script>
+    <script src="scripts/shop.js"></script>
+    <script src="scripts/welcome.js"></script>
+    <script src="scripts/shortcut.json"></script>
+
+    <script>
+        const STORAGE_KEY = 'armory_legends_save_data';
+
+        let state = {
+            money: 1000,
+            inventory: [],
+            selectedId: null,
+            isMusicOn: false
+        };
+
+        // SAVE & LOAD SYSTEM
+        function saveGame() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                money: state.money,
+                inventory: state.inventory
+            }));
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    state.money = data.money ?? 1000;
+                    state.inventory = data.inventory ?? [];
+                } catch (e) {
+                    console.error("Save corrupted", e);
+                }
+            }
+        }
+
+        function resetGame() {
+            if (confirm("Permanently wipe your armory and credits?")) {
+                localStorage.removeItem(STORAGE_KEY);
+                window.location.reload();
+            }
+        }
+
+        function playHover() { const s = document.getElementById('sfx-hover'); if(s) { s.currentTime = 0; s.play().catch(e => {}); } }
+        function playPurchase() { const s = document.getElementById('sfx-purchase'); if(s) { s.currentTime = 0; s.play().catch(e => {}); } }
+        // New Click Sound Function
+        function playClick() { const s = document.getElementById('sfx-click'); if(s) { s.currentTime = 0; s.play().catch(e => {}); } }
+        
+        function toggleMusic() {
+            const m = document.getElementById('bg-music');
+            if (!m) return;
+            state.isMusicOn ? m.pause() : m.play().catch(e => {});
+            state.isMusicOn = !state.isMusicOn;
+            const btn = document.getElementById('music-toggle');
+            if (btn) btn.innerText = `Audio: ${state.isMusicOn ? 'On' : 'Off'}`;
+        }
+
+        function init() { 
+            loadGame();
+            updateStatsUI(); // Move this up so money shows immediately
+            renderInventory(); 
+            ShopSystem.render(); 
+        }
+
+        function buyWeapon(weaponModelId) {
+            const t = WeaponRepository[weaponModelId];
+            if (!t) return;
+
+            if (state.money >= t.price) {
+                state.money -= t.price;
+                state.inventory.push({
+                    id: Date.now(),
+                    modelId: weaponModelId,
+                    name: t.name,
+                    skin: 'charcoal',
+                    purchasedSkins: ['charcoal'],
+                    stats: { ...t.stats },
+                    value: t.price,
+                    mods: 0
+                });
+                playPurchase();
+                showToast(`Asset Acquired: ${t.name}`);
+                saveGame();
+                renderInventory();
+                updateStatsUI();
+            } else { showToast("Credit Denied"); }
+        }
+
+        function upgrade(stat) {
+            if (!state.selectedId) return;
+            const w = state.inventory.find(i => i.id === state.selectedId);
+            const cost = stat === 'accuracy' ? 450 : (stat === 'durability' ? 300 : 250);
+            if (state.money >= cost && w.stats[stat] < 100) {
+                state.money -= cost;
+                w.stats[stat] = Math.min(100, w.stats[stat] + 15);
+                w.value += Math.floor(cost * 1.3);
+                w.mods++;
+                playPurchase();
+                saveGame();
+                renderWorkshop();
+                updateStatsUI();
+            } else if (state.money < cost) {
+                showToast("Insufficient Funds");
+            }
+        }
+
+        function updateColor(skinName) {
+            if (!state.selectedId) return;
+            const w = state.inventory.find(i => i.id === state.selectedId);
+            
+            if (w.purchasedSkins.includes(skinName)) {
+                w.skin = skinName;
+                saveGame();
+                renderWorkshop();
+                renderInventory();
+                return;
+            }
+
+            const cost = skinName === 'gold' ? 1000 : 150;
+            if (state.money >= cost) {
+                state.money -= cost;
+                w.skin = skinName;
+                w.purchasedSkins.push(skinName);
+                w.value += Math.floor(cost * 1.2);
+                
+                playPurchase();
+                saveGame();
+                renderWorkshop();
+                renderInventory();
+                updateStatsUI();
+                showToast(`Applied ${skinName} Finish`);
+            } else {
+                showToast("Cannot afford this finish");
+            }
+        }
+
+        function sellWeapon(weaponId, buyerId) {
+            const idx = state.inventory.findIndex(w => w.id === weaponId);
+            const w = state.inventory[idx];
+            const b = MarketSystem.buyers.find(buyer => buyer.id === buyerId);
+            const price = MarketSystem.calculateSalePrice(w, b);
+            
+            state.money += price;
+            state.inventory.splice(idx, 1);
+            state.selectedId = null;
+            playPurchase();
+            showToast(`LIQUIDATED: +$${price.toLocaleString()}`);
+            saveGame();
+            switchTab('workshop');
+            renderInventory();
+            updateStatsUI();
+        }
+
+        function renderInventory() {
+            const list = document.getElementById('inventory-list');
+            if (!list) return;
+
+            list.innerHTML = state.inventory.map(w => {
+                const lookupId = w.modelId || (w.type === 'pistol' ? 'pistol_9mm' : 
+                                              w.type === 'rifle' ? 'rifle_c7' : 
+                                              w.type === 'smg' ? 'smg_vector' : 
+                                              w.type === 'shotgun' ? 'shotgun_breacher' : 'pistol_9mm');
+                
+                const weaponDef = WeaponRepository[lookupId];
+                const imageSrc = weaponDef ? weaponDef.images[w.skin] : '';
+
+                return `
+                <div onclick="selectWeapon(${w.id}); playClick();" class="p-3 bg-zinc-800/50 rounded border ${state.selectedId === w.id ? 'border-amber-500' : 'border-zinc-700'} cursor-pointer hover:bg-zinc-700/50 transition-all flex items-center space-x-4">
+                    <img src="${imageSrc}" class="w-12 h-10 object-cover rounded bg-black/40 p-1 weapon-png">
+                    <div class="flex-grow">
+                        <div class="text-xs font-bold uppercase">${w.name}</div>
+                        <div class="text-green-500 text-[10px] font-bold">$${w.value.toLocaleString()}</div>
+                    </div>
+                </div>
+            `}).join('');
+            
+            state.selectedId ? renderWorkshop() : (document.getElementById('custom-area').classList.add('hidden'), document.getElementById('empty-workshop').classList.remove('hidden'));
+        }
+
+        function selectWeapon(id) { state.selectedId = id; renderInventory(); }
+
+        function renderWorkshop() {
+            const w = state.inventory.find(i => i.id === state.selectedId);
+            if (!w) return;
+
+            const lookupId = w.modelId || (w.type === 'pistol' ? 'pistol_9mm' : 
+                                              w.type === 'rifle' ? 'rifle_c7' : 
+                                              w.type === 'smg' ? 'smg_vector' : 
+                                              w.type === 'shotgun' ? 'shotgun_breacher' : 'pistol_9mm');
+            const weaponDef = WeaponRepository[lookupId];
+            const imageSrc = weaponDef ? weaponDef.images[w.skin] : '';
+
+            document.getElementById('custom-area').classList.remove('hidden');
+            document.getElementById('empty-workshop').classList.add('hidden');
+            
+            document.getElementById('weapon-preview').innerHTML = `<img src="${imageSrc}" class="weapon-png weapon-png-large">`;
+            
+            document.getElementById('weapon-stats').innerHTML = ['accuracy', 'durability', 'handling'].map(k => `
+                <div class="text-[10px] uppercase mb-1"><span>${k}</span>: ${w.stats[k]}%</div>
+                <div class="stat-bar mb-3"><div class="stat-fill bg-amber-500" style="width: ${w.stats[k]}%"></div></div>
+            `).join('');
+        }
+
+        function switchTab(tab) {
+            playClick(); // Play sound when switching tabs
+            if (tab === 'market') {
+                const l = document.getElementById('market-loading');
+                l.classList.remove('hidden');
+                setTimeout(() => {
+                    l.classList.add('hidden');
+                    applyTabChange(tab);
+                    MarketSystem.render(state.inventory, WeaponRepository);
+                }, 800);
+            } else if (tab === 'shop') {
+                applyTabChange(tab);
+                ShopSystem.render();
+            } else {
+                applyTabChange(tab);
+                if (tab === 'workshop') renderInventory();
+            }
+        }
+
+        function applyTabChange(tab) {
+            ['workshop', 'market', 'shop'].forEach(t => {
+                const view = document.getElementById(`view-${t}`);
+                const tabBtn = document.getElementById(`tab-${t}`);
+                if (view) view.classList.add('hidden');
+                if (tabBtn) {
+                    tabBtn.classList.remove('tab-active');
+                    tabBtn.classList.add('text-zinc-500');
+                }
+            });
+            const activeView = document.getElementById(`view-${tab}`);
+            const activeTab = document.getElementById(`tab-${tab}`);
+            if (activeView) activeView.classList.remove('hidden');
+            if (activeTab) {
+                activeTab.classList.add('tab-active');
+                activeTab.classList.remove('text-zinc-500');
+            }
+        }
+
+        function updateStatsUI() { 
+            const el = document.getElementById('player-money');
+            if (el) el.innerText = state.money.toLocaleString(); 
+        }
+
+        function showToast(m) {
+            const t = document.getElementById('toast');
+            if (!t) return;
+            t.innerText = m; t.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 2000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
