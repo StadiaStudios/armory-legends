@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ARMORY LEGENDS | PLAY NOW FREE</title>
     <link rel="icon" type="image/png" sizes="32x32" href="resources/icons/favicon.png">
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
@@ -40,13 +41,23 @@
         .weapon-png { filter: drop-shadow(0 0 10px rgba(0,0,0,0.8)); transition: all 0.3s ease; object-fit: contain; }
         .weapon-png-large { filter: drop-shadow(0 0 25px rgba(0,0,0,1)); max-width: 80%; max-height: 80%; }
         .loading-overlay { background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(4px); }
+
+        /* Custom Range Slider Styling */
+        input[type=range]::-webkit-slider-thumb {
+            appearance: none;
+            height: 12px;
+            width: 12px;
+            border-radius: 2px;
+            background: #fbbf24;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(251, 191, 36, 0.5);
+        }
     </style>
 </head>
 <body class="crt">
     <audio id="bg-music" loop><source src="sfx/bg-music.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-purchase"><source src="sfx/purchase.mp3" type="audio/mpeg"></audio>
     <audio id="sfx-hover"><source src="sfx/hover-sfx.mp3" type="audio/mpeg"></audio>
-    <!-- New Audio for Nav Click -->
     <audio id="sfx-click"><source src="sfx/click.mp3" type="audio/mpeg"></audio>
 
     <div id="app" class="max-w-5xl mx-auto p-4 md:p-8">
@@ -63,9 +74,6 @@
                 <div class="lg:col-span-4 bg-zinc-900 p-4 rounded-lg neon-border">
                     <h2 class="text-xs uppercase text-zinc-500 mb-4 font-bold border-b border-zinc-800 pb-2">Weapon Armory</h2>
                     <div id="inventory-list" class="space-y-2 max-h-[500px] overflow-y-auto pr-2"></div>
-                    <div class="mt-4 pt-4 border-t border-zinc-800">
-                        <button onclick="resetGame()" class="text-[10px] uppercase text-red-500/50 hover:text-red-500 transition-colors">Wipe Save Data</button>
-                    </div>
                 </div>
 
                 <div id="custom-area" class="lg:col-span-8 space-y-6 hidden">
@@ -112,36 +120,52 @@
             <section id="view-shop" class="hidden">
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="shop-list"></div>
             </section>
+
+            <!-- Upgrades Section -->
+            <section id="view-upgrades" class="hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="upgrades-list"></div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="view-settings" class="hidden">
+                <!-- Content injected by SettingsSystem.render() -->
+            </section>
         </main>
 
         <div id="toast" class="fixed bottom-8 right-8 bg-zinc-100 text-black px-6 py-3 font-bold uppercase text-xs tracking-widest translate-y-20 opacity-0 transition-all duration-300 z-[100]">System Alert</div>
     </div>
 
-    <!-- LOAD THE NEW GUN CONFIGURATION FILE FIRST -->
+    
     <script src="scripts/guns.js"></script>
-
-    <!-- External logic files -->
     <script src="scripts/navbar.js"></script>
     <script src="scripts/market.js"></script>
     <script src="scripts/shop.js"></script>
+    <script src="scripts/upgrades.js"></script>
     <script src="scripts/welcome.js"></script>
-    <script src="scripts/shortcut.json"></script>
+    <script src="scripts/settings.js"></script>
 
     <script>
         const STORAGE_KEY = 'armory_legends_save_data';
 
         let state = {
-            money: 1000,
+            money: 5000,
             inventory: [],
             selectedId: null,
-            isMusicOn: false
+            isMusicOn: false,
+            musicVolume: 0.5,
+            displayName: "AMMO & GUNS SHOP",
+            upgrades: {
+                doubleSell: false
+            }
         };
 
-        // SAVE & LOAD SYSTEM
         function saveGame() {
             localStorage.setItem(STORAGE_KEY, JSON.stringify({
                 money: state.money,
-                inventory: state.inventory
+                inventory: state.inventory,
+                displayName: state.displayName,
+                musicVolume: state.musicVolume,
+                upgrades: state.upgrades
             }));
         }
 
@@ -152,6 +176,9 @@
                     const data = JSON.parse(saved);
                     state.money = data.money ?? 1000;
                     state.inventory = data.inventory ?? [];
+                    state.displayName = data.displayName ?? "AMMO & GUNS SHOP";
+                    state.musicVolume = data.musicVolume ?? 0.5;
+                    state.upgrades = data.upgrades ?? { doubleSell: false };
                 } catch (e) {
                     console.error("Save corrupted", e);
                 }
@@ -167,12 +194,12 @@
 
         function playHover() { const s = document.getElementById('sfx-hover'); if(s) { s.currentTime = 0; s.play().catch(e => {}); } }
         function playPurchase() { const s = document.getElementById('sfx-purchase'); if(s) { s.currentTime = 0; s.play().catch(e => {}); } }
-        // New Click Sound Function
         function playClick() { const s = document.getElementById('sfx-click'); if(s) { s.currentTime = 0; s.play().catch(e => {}); } }
         
         function toggleMusic() {
             const m = document.getElementById('bg-music');
             if (!m) return;
+            m.volume = state.musicVolume;
             state.isMusicOn ? m.pause() : m.play().catch(e => {});
             state.isMusicOn = !state.isMusicOn;
             const btn = document.getElementById('music-toggle');
@@ -181,15 +208,15 @@
 
         function init() { 
             loadGame();
-            updateStatsUI(); // Move this up so money shows immediately
+            updateStatsUI();
             renderInventory(); 
             ShopSystem.render(); 
+            SettingsSystem.init();
         }
 
         function buyWeapon(weaponModelId) {
             const t = WeaponRepository[weaponModelId];
             if (!t) return;
-
             if (state.money >= t.price) {
                 state.money -= t.price;
                 state.inventory.push({
@@ -231,7 +258,6 @@
         function updateColor(skinName) {
             if (!state.selectedId) return;
             const w = state.inventory.find(i => i.id === state.selectedId);
-            
             if (w.purchasedSkins.includes(skinName)) {
                 w.skin = skinName;
                 saveGame();
@@ -239,55 +265,60 @@
                 renderInventory();
                 return;
             }
-
             const cost = skinName === 'gold' ? 1000 : 150;
             if (state.money >= cost) {
                 state.money -= cost;
                 w.skin = skinName;
                 w.purchasedSkins.push(skinName);
                 w.value += Math.floor(cost * 1.2);
-                
                 playPurchase();
                 saveGame();
                 renderWorkshop();
                 renderInventory();
                 updateStatsUI();
                 showToast(`Applied ${skinName} Finish`);
-            } else {
-                showToast("Cannot afford this finish");
-            }
+            } else { showToast("Cannot afford this finish"); }
         }
 
         function sellWeapon(weaponId, buyerId) {
+            // Check for market cooldown
+            const now = Date.now();
+            if (now - MarketSystem.lastSellTime < MarketSystem.cooldownDuration) {
+                const remaining = Math.ceil((MarketSystem.cooldownDuration - (now - MarketSystem.lastSellTime)) / 1000);
+                showToast(`SIGNAL JAMMED: WAIT ${remaining}s`);
+                return;
+            }
+
             const idx = state.inventory.findIndex(w => w.id === weaponId);
             const w = state.inventory[idx];
             const b = MarketSystem.buyers.find(buyer => buyer.id === buyerId);
-            const price = MarketSystem.calculateSalePrice(w, b);
             
+            // Pass upgrades state to calculation
+            const price = MarketSystem.calculateSalePrice(w, b, state.upgrades);
+            
+            // Set cooldown
+            MarketSystem.lastSellTime = now;
+
             state.money += price;
             state.inventory.splice(idx, 1);
             state.selectedId = null;
             playPurchase();
             showToast(`LIQUIDATED: +$${price.toLocaleString()}`);
             saveGame();
-            switchTab('workshop');
             renderInventory();
             updateStatsUI();
+
+            // Refresh market view to show cooldown, pass upgrades
+            MarketSystem.render(state.inventory, WeaponRepository, state.upgrades);
         }
 
         function renderInventory() {
             const list = document.getElementById('inventory-list');
             if (!list) return;
-
             list.innerHTML = state.inventory.map(w => {
-                const lookupId = w.modelId || (w.type === 'pistol' ? 'pistol_9mm' : 
-                                              w.type === 'rifle' ? 'rifle_c7' : 
-                                              w.type === 'smg' ? 'smg_vector' : 
-                                              w.type === 'shotgun' ? 'shotgun_breacher' : 'pistol_9mm');
-                
+                const lookupId = w.modelId || 'pistol_9mm';
                 const weaponDef = WeaponRepository[lookupId];
                 const imageSrc = weaponDef ? weaponDef.images[w.skin] : '';
-
                 return `
                 <div onclick="selectWeapon(${w.id}); playClick();" class="p-3 bg-zinc-800/50 rounded border ${state.selectedId === w.id ? 'border-amber-500' : 'border-zinc-700'} cursor-pointer hover:bg-zinc-700/50 transition-all flex items-center space-x-4">
                     <img src="${imageSrc}" class="w-12 h-10 object-cover rounded bg-black/40 p-1 weapon-png">
@@ -295,9 +326,8 @@
                         <div class="text-xs font-bold uppercase">${w.name}</div>
                         <div class="text-green-500 text-[10px] font-bold">$${w.value.toLocaleString()}</div>
                     </div>
-                </div>
-            `}).join('');
-            
+                </div>`;
+            }).join('');
             state.selectedId ? renderWorkshop() : (document.getElementById('custom-area').classList.add('hidden'), document.getElementById('empty-workshop').classList.remove('hidden'));
         }
 
@@ -306,19 +336,12 @@
         function renderWorkshop() {
             const w = state.inventory.find(i => i.id === state.selectedId);
             if (!w) return;
-
-            const lookupId = w.modelId || (w.type === 'pistol' ? 'pistol_9mm' : 
-                                              w.type === 'rifle' ? 'rifle_c7' : 
-                                              w.type === 'smg' ? 'smg_vector' : 
-                                              w.type === 'shotgun' ? 'shotgun_breacher' : 'pistol_9mm');
+            const lookupId = w.modelId || 'pistol_9mm';
             const weaponDef = WeaponRepository[lookupId];
             const imageSrc = weaponDef ? weaponDef.images[w.skin] : '';
-
             document.getElementById('custom-area').classList.remove('hidden');
             document.getElementById('empty-workshop').classList.add('hidden');
-            
             document.getElementById('weapon-preview').innerHTML = `<img src="${imageSrc}" class="weapon-png weapon-png-large">`;
-            
             document.getElementById('weapon-stats').innerHTML = ['accuracy', 'durability', 'handling'].map(k => `
                 <div class="text-[10px] uppercase mb-1"><span>${k}</span>: ${w.stats[k]}%</div>
                 <div class="stat-bar mb-3"><div class="stat-fill bg-amber-500" style="width: ${w.stats[k]}%"></div></div>
@@ -326,18 +349,24 @@
         }
 
         function switchTab(tab) {
-            playClick(); // Play sound when switching tabs
+            playClick();
             if (tab === 'market') {
                 const l = document.getElementById('market-loading');
                 l.classList.remove('hidden');
                 setTimeout(() => {
                     l.classList.add('hidden');
                     applyTabChange(tab);
-                    MarketSystem.render(state.inventory, WeaponRepository);
+                    MarketSystem.render(state.inventory, WeaponRepository, state.upgrades);
                 }, 800);
             } else if (tab === 'shop') {
                 applyTabChange(tab);
                 ShopSystem.render();
+            } else if (tab === 'upgrades') {
+                applyTabChange(tab);
+                UpgradesSystem.render();
+            } else if (tab === 'settings') {
+                applyTabChange(tab);
+                SettingsSystem.render();
             } else {
                 applyTabChange(tab);
                 if (tab === 'workshop') renderInventory();
@@ -345,7 +374,7 @@
         }
 
         function applyTabChange(tab) {
-            ['workshop', 'market', 'shop'].forEach(t => {
+            ['workshop', 'market', 'shop', 'settings', 'upgrades'].forEach(t => {
                 const view = document.getElementById(`view-${t}`);
                 const tabBtn = document.getElementById(`tab-${t}`);
                 if (view) view.classList.add('hidden');

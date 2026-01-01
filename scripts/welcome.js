@@ -10,7 +10,7 @@ const welcomeModalHTML = `
             
             <h1 class="text-2xl font-bold text-amber-500 uppercase tracking-tighter mb-2">Welcome, Operator</h1>
             <p class="text-zinc-400 text-sm mb-6 leading-relaxed">
-                The underworld market is now open to you. We've credited your account with <span class="text-green-500 font-bold">$1,000</span>.
+                The underworld market is now open to you. We've credited your account with <span class="text-green-500 font-bold">$5,000</span>.
             </p>
             
             <div class="bg-black/40 border border-zinc-800 p-4 rounded text-left mb-8">

@@ -40,27 +40,27 @@ const WeaponRepository = {
             red: "resources/weapons/assault-rifles/ar-15/red.png"
         }
     },
-    'smg_vector': {
-        name: "Vector K10 COMING SOON",
-        type: "SMG",
-        price: 1600,
-        description: "Extreme rate of fire. Excellent for close quarters.",
-        stats: { accuracy: 55, durability: 40, handling: 90 },
+    'bmm-draco': {
+        name: "BMM-DRACO",
+        type: "Rifle",
+        price: 25000,
+        description: "",
+        stats: { accuracy: 40, durability: 40, handling: 90 },
         images: {
-            charcoal: "https://images.unsplash.com/photo-1591123720164-de1348028a82?auto=format&fit=crop&q=80&w=600",
-            navy: "https://images.unsplash.com/photo-1584346133400-f6556488d75a?auto=format&fit=crop&q=80&w=600",
-            gold: "https://images.unsplash.com/photo-1595079676159-467277259f9a?auto=format&fit=crop&q=80&w=600",
-            tan: "https://images.unsplash.com/photo-1584013143370-4384e918491c?auto=format&fit=crop&q=80&w=600",
-            white: "https://images.unsplash.com/photo-1582234053916-2d93e185805f?auto=format&fit=crop&q=80&w=600",
-            red: "https://images.unsplash.com/photo-1591123720164-de1348028a82?auto=format&fit=crop&q=80&w=600"
+            charcoal: "resources/weapons/bmm-draco/charcoal.png",
+            navy: "resources/weapons/bmm-draco/charcoal.png",
+            gold: "resources/weapons/bmm-draco/charcoal.png",
+            tan: "resources/weapons/bmm-draco/charcoal.png",
+            white: "resources/weapons/bmm-draco/white.png",
+            red: "resources/weapons/bmm-draco/red.png"
         }
     },
     'shotgun_breacher': {
-        name: "Breacher-12 COMING SOON",
-        type: "Shotgun",
-        price: 1900,
-        description: "Pump-action reliability. Devastating stopping power.",
-        stats: { accuracy: 30, durability: 80, handling: 50 },
+        name: "COMING SOON",
+        type: " ",
+        price: 999999999999,
+        description: "",
+        stats: { accuracy: 0, durability: 0, handling: 0 },
         images: {
             charcoal: "https://images.unsplash.com/photo-1591123720164-de1348028a82?auto=format&fit=crop&q=80&w=600",
             navy: "https://images.unsplash.com/photo-1584346133400-f6556488d75a?auto=format&fit=crop&q=80&w=600",

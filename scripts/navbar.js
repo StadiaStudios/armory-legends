@@ -25,10 +25,19 @@ const Navbar = {
                 </div>
 
                 <div class="flex items-center gap-6">
-                    <div class="text-right">
-                        <div class="text-xl md:text-2xl font-bold text-green-500">$<span id="player-money">0</span></div>
-                        <div class="text-[9px] md:text-xs text-zinc-400 uppercase tracking-widest">Available Funds</div>
-                    </div>
+    <div class="flex items-center gap-3"> <img src="resources/icons/currency.png" 
+             alt="Funds" 
+             class="w-6 h-6 md:w-8 md:h-8 opacity-80" />
+             
+        <div class="text-right">
+            <div class="text-xl md:text-2xl font-bold text-green-500">
+                $<span id="player-money">0</span>
+            </div>
+            <div class="text-[9px] md:text-xs text-zinc-400 uppercase tracking-widest">
+                Available Funds
+            </div>
+        </div>
+    </div>
                     
                     <!-- Mobile Hamburger -->
                     <button id="mobile-menu-btn" class="md:hidden text-zinc-100 p-2 border border-zinc-800 rounded">
@@ -40,9 +49,11 @@ const Navbar = {
 
                 <!-- Mobile Dropdown -->
                 <div id="mobile-dropdown" class="absolute top-full left-0 w-full bg-zinc-900 border border-zinc-800 z-[100] hidden flex-col p-4 space-y-4 shadow-2xl">
-                    <button onclick="Navbar.navigate('workshop')" class="text-left text-sm font-bold uppercase tracking-widest hover:text-amber-500 py-2 border-b border-zinc-800">Workshop</button>
+                    <button onclick="Navbar.navigate('workshop')" class="text-left text-sm font-bold uppercase tracking-widest hover:text-amber-500 py-2 border-b border-zinc-800">Weapon Workshop</button>
                     <button onclick="Navbar.navigate('market')" class="text-left text-sm font-bold uppercase tracking-widest hover:text-amber-500 py-2 border-b border-zinc-800">Marketplace</button>
                     <button onclick="Navbar.navigate('shop')" class="text-left text-sm font-bold uppercase tracking-widest hover:text-amber-500 py-2 border-b border-zinc-800">Gun Store</button>
+                    <button onclick="Navbar.navigate('upgrades')" class="text-left text-sm font-bold uppercase tracking-widest hover:text-amber-500 py-2 border-b border-zinc-800">Upgrades</button>
+                    <button onclick="Navbar.navigate('settings')" class="text-left text-sm font-bold uppercase tracking-widest hover:text-amber-500 py-2 border-b border-zinc-800">Game Settings</button>
                     <button onclick="toggleMusic()" class="text-left text-[10px] hover:text-gray-300 uppercase text-zinc-500 pt-2">Toggle Audio</button>
                 </div>
             </header>
@@ -51,6 +62,8 @@ const Navbar = {
                 <button onmouseenter="playHover()" onclick="switchTab('workshop')" id="tab-workshop" class="pb-2 tab-active hover:text-amber-500">Workshop</button>
                 <button onmouseenter="playHover()" onclick="switchTab('market')" id="tab-market" class="pb-2 text-zinc-500 hover:text-amber-500">Marketplace</button>
                 <button onmouseenter="playHover()" onclick="switchTab('shop')" id="tab-shop" class="pb-2 text-zinc-500 hover:text-amber-500">Gun Store</button>
+                <button onmouseenter="playHover()" onclick="switchTab('upgrades')" id="tab-upgrades" class="pb-2 text-zinc-500 hover:text-amber-500">Upgrades</button>
+                <button onmouseenter="playHover()" onclick="switchTab('settings')" id="tab-settings" class="pb-2 text-zinc-500 hover:text-amber-500">Settings</button>
             </nav>
         `;
         
@@ -60,6 +73,7 @@ const Navbar = {
     setupEventListeners() {
         const btn = document.getElementById('mobile-menu-btn');
         const dropdown = document.getElementById('mobile-dropdown');
+        if (!btn || !dropdown) return;
         
         btn.addEventListener('click', () => {
             dropdown.classList.toggle('hidden');
@@ -77,8 +91,11 @@ const Navbar = {
 
     navigate(tab) {
         switchTab(tab);
-        document.getElementById('mobile-dropdown').classList.add('hidden');
-        document.getElementById('mobile-dropdown').classList.remove('flex');
+        const dropdown = document.getElementById('mobile-dropdown');
+        if (dropdown) {
+            dropdown.classList.add('hidden');
+            dropdown.classList.remove('flex');
+        }
     }
 };
 
