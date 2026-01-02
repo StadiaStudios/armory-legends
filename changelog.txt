@@ -1,3 +1,6 @@
+V1.2.2 - - -  
+Updates to Icons, New Weapons, Limited Time weapons added, Fixes to splash page,
+
 V1.1.1 - - -  
 Bug Fixes. Improvements, Added BMM-Draco, Upgrades Script, Added Settings, AR-15 Update, Backup Ability, 
 Added a workers hut for passive money, Fixes to upgrades, Price adjustments, 

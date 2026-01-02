@@ -152,7 +152,7 @@
             inventory: [],
             selectedId: null,
             isMusicOn: false,
-            musicVolume: 0.5,
+            musicVolume: 0.2,
             displayName: "AMMO & GUNS SHOP",
             upgrades: {
                 doubleSell: false
@@ -217,6 +217,16 @@
         function buyWeapon(weaponModelId) {
             const t = WeaponRepository[weaponModelId];
             if (!t) return;
+
+            // LIMITED ITEM LOGIC
+            if (t.isLimited) {
+                const alreadyOwned = state.inventory.some(i => i.modelId === weaponModelId);
+                if (alreadyOwned) {
+                    showToast("Limited Edition: Already Owned");
+                    return;
+                }
+            }
+
             if (state.money >= t.price) {
                 state.money -= t.price;
                 state.inventory.push({
@@ -234,6 +244,8 @@
                 saveGame();
                 renderInventory();
                 updateStatsUI();
+                // Refresh shop to update button states if needed
+                if(window.ShopSystem) ShopSystem.render(); 
             } else { showToast("Credit Denied"); }
         }
 
@@ -291,6 +303,14 @@
 
             const idx = state.inventory.findIndex(w => w.id === weaponId);
             const w = state.inventory[idx];
+            
+            // LIMITED ITEM LOGIC
+            const weaponDef = WeaponRepository[w.modelId];
+            if (weaponDef && weaponDef.isLimited) {
+                showToast("Cannot sell Limited Edition items");
+                return;
+            }
+
             const b = MarketSystem.buyers.find(buyer => buyer.id === buyerId);
             
             // Pass upgrades state to calculation
@@ -318,12 +338,18 @@
             list.innerHTML = state.inventory.map(w => {
                 const lookupId = w.modelId || 'pistol_9mm';
                 const weaponDef = WeaponRepository[lookupId];
-                const imageSrc = weaponDef ? weaponDef.images[w.skin] : '';
+                // Fallback if weapon was removed from repo but exists in save
+                const imageSrc = weaponDef ? weaponDef.images[w.skin] : 'resources/icons/favicon.png';
+                const isLimited = weaponDef ? weaponDef.isLimited : false;
+                
                 return `
                 <div onclick="selectWeapon(${w.id}); playClick();" class="p-3 bg-zinc-800/50 rounded border ${state.selectedId === w.id ? 'border-amber-500' : 'border-zinc-700'} cursor-pointer hover:bg-zinc-700/50 transition-all flex items-center space-x-4">
                     <img src="${imageSrc}" class="w-12 h-10 object-cover rounded bg-black/40 p-1 weapon-png">
                     <div class="flex-grow">
-                        <div class="text-xs font-bold uppercase">${w.name}</div>
+                        <div class="text-xs font-bold uppercase flex justify-between">
+                            ${w.name}
+                            ${isLimited ? '<span class="text-purple-500 text-[9px] border border-purple-500 px-1 rounded">SPECIAL EDITION</span>' : ''}
+                        </div>
                         <div class="text-green-500 text-[10px] font-bold">$${w.value.toLocaleString()}</div>
                     </div>
                 </div>`;
